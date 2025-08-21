@@ -5,13 +5,15 @@ import axios from 'axios'
 import DataTable from 'primevue/datatable'
 import Button from 'primevue/button'
 import Column from 'primevue/column'
+import FileUpload from 'primevue/fileupload'
 
 import { useToast } from 'primevue/usetoast'
 
 const toast = useToast()
 
 const loading = ref(false)
-const products = ref([])
+const records = ref<Array<any>>([])
+const selected_records = ref();
 const current_page = ref(1)
 const row_per_page = ref(50)
 const total_item_count = ref(0)
@@ -27,7 +29,7 @@ const refreshTable = () => {
     .then((response) => {
       if (response && response.data && response.data?.pagination) {
         console.log(response)
-        products.value = response.data?.items
+        records.value = response.data?.items
         current_page.value = response.data?.pagination?.current_page_number
         total_item_count.value = response.data?.pagination?.total_item_count
         loading.value = false
@@ -37,7 +39,7 @@ const refreshTable = () => {
           severity: 'error',
           summary: 'Error',
           detail: 'Error fetching data',
-          life: 3000,
+          life: 1000,
         })
         loading.value = false
       }
@@ -49,7 +51,34 @@ const refreshTable = () => {
     })
 }
 
-const deleteRecord = (deleteIds: Array<number>) => {
+// A method to handle the file selection
+const onFileSelect = (event: any) => {
+  const file = event.files[0]
+  if (file) {
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const fileContent = reader.result
+      if (fileContent) {
+        const newRecords = fileContent
+          .toString()
+          .split('\n')
+          .map((line) => {
+            try {
+              const newRow = JSON.parse(line)
+              return newRow
+            } catch (error) {
+              return null
+            }
+          })
+          .filter((x) => x)
+        createBatchRecords(newRecords)
+      }
+    }
+    reader.readAsText(file)
+  }
+}
+
+const deleteBatchRecord = (deleteIds: Array<number>) => {
   axios
     .delete(`/gene/delete_batch/`, { data: { ids: deleteIds } })
     .then((response) => {
@@ -58,7 +87,7 @@ const deleteRecord = (deleteIds: Array<number>) => {
           severity: 'success',
           summary: 'Success',
           detail: 'Record deleted successfully',
-          life: 3000,
+          life: 1000,
         })
         refreshTable()
       } else {
@@ -66,13 +95,37 @@ const deleteRecord = (deleteIds: Array<number>) => {
           severity: 'error',
           summary: 'Error',
           detail: 'Error deleting record',
-          life: 3000,
+          life: 1000,
         })
       }
     })
     .catch((error) => {
       toast.add({ severity: 'error', summary: 'Error', detail: error.message, life: 3000 })
     })
+}
+
+const createBatchRecords = async (newRecords: Array<any>) => {
+  try {
+    const response = await axios.post(`/gene/create_batch/`, newRecords)
+    if (response && response.data) {
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'New records uploaded successfully',
+        life: 1000,
+      })
+      refreshTable()
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Error uploading new records',
+        life: 1000,
+      })
+    }
+  } catch (error: any) {
+    toast.add({ severity: 'error', summary: 'Error', detail: error.message, life: 1000 })
+  }
 }
 
 const onPage = (event: any) => {
@@ -92,7 +145,10 @@ watch([current_page, row_per_page], () => {
       paginator
       stripedRows
       columnResizeMode="fit"
-      :value="products"
+      dataKey="id"
+      selectionMode="multiple"
+      v-model:selection="selected_records"
+      :value="records"
       :rows="row_per_page"
       :totalRecords="total_item_count"
       :rowsPerPageOptions="[5, 10, 20, 50]"
@@ -100,7 +156,7 @@ watch([current_page, row_per_page], () => {
       tableStyle="min-width: 50rem"
     >
       <template #header>
-        <div class="size-full flex justify-around">
+        <div class="flex flex-row justify-between">
           <Button
             :disabled="loading"
             severity="info"
@@ -110,20 +166,26 @@ watch([current_page, row_per_page], () => {
             outlined
             @click="refreshTable()"
           />
-          <Button
+          <FileUpload
             :disabled="loading"
+            mode="basic"
+            @select="onFileSelect"
+            customUpload
+            auto
             severity="success"
-            type="button"
-            icon="pi pi-plus"
-            label="Add"
-            @click="refreshTable()"
+            chooseLabel="Upload"
+            chooseIcon="pi pi-upload"
           />
         </div>
       </template>
       <template #empty>No record found.</template>
       <template #loading>Loading data. Please wait.</template>
       <Column field="name" header="Name"></Column>
-      <Column field="unique_gene_ids" header="Unique Gene IDs"></Column>
+      <Column field="unique_gene_ids" header="Unique Gene IDs">
+        <template #body="slotProps">
+          {{ (slotProps.data.unique_gene_ids as Array<string>).join(",") }}
+        </template>
+      </Column>
       <Column field="chromosome" header="Chromosome"></Column>
       <Column field="start" header="Start"></Column>
       <Column field="end" header="End"></Column>
@@ -133,14 +195,18 @@ watch([current_page, row_per_page], () => {
       <Column field="maximum_count" header="Maximum Count"></Column>
       <Column field="forward_count" header="Forward Count"></Column>
       <Column field="reverse_count" header="Reverse Count"></Column>
-      <Column field="meandepth" header="Mean Depth"></Column>
+      <Column field="meandepth" header="Mean Depth">
+        <template #body="slotProps">
+          {{ (slotProps.data.meandepth as number).toFixed(2) }}
+        </template>
+      </Column>
       <Column field="stdev" header="Standard Deviation"></Column>
       <Column header="Actions">
         <template #body="slotProps">
           <Button
             icon="pi pi-trash"
             class="p-button-rounded p-button-danger"
-            @click="deleteRecord([slotProps.data.id])"
+            @click="deleteBatchRecord([slotProps.data.id])"
           />
         </template>
       </Column>
