@@ -15,4 +15,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    cors: false,
+    proxy: {
+      '/gene': {
+        target: 'http://localhost:8001/',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  }
 })
