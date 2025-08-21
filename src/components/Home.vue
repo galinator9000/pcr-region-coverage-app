@@ -86,7 +86,7 @@ const deleteBatchRecord = (deleteIds: Array<number>) => {
         toast.add({
           severity: 'success',
           summary: 'Success',
-          detail: 'Record deleted successfully',
+          detail: response.data?.detail && 'Record deleted successfully',
           life: 1000,
         })
         refreshTable()
@@ -176,10 +176,20 @@ watch([current_page, row_per_page], () => {
             chooseLabel="Upload"
             chooseIcon="pi pi-upload"
           />
+          <Button
+            :disabled="loading"
+            severity="danger"
+            type="button"
+            icon="pi pi-trash"
+            label="Delete"
+            @click="deleteBatchRecord(selected_records.map((record: any) => record.id))"
+          />
         </div>
       </template>
       <template #empty>No record found.</template>
       <template #loading>Loading data. Please wait.</template>
+
+      <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
       <Column field="name" header="Name"></Column>
       <Column field="unique_gene_ids" header="Unique Gene IDs">
         <template #body="slotProps">
