@@ -29,7 +29,6 @@ const refreshTable = () => {
     .get(`/gene?page=${current_page.value}&pagesize=${row_per_page.value}`)
     .then((response) => {
       if (response && response.data && response.data?.pagination) {
-        console.log(response)
         records.value = response.data?.items
         current_page.value = response.data?.pagination?.current_page_number
         total_item_count.value = response.data?.pagination?.total_item_count
@@ -148,16 +147,17 @@ watch([current_page, row_per_page], () => {
       columnResizeMode="fit"
       dataKey="id"
       selectionMode="multiple"
+      showGridlines
       v-model:selection="selected_records"
       :value="records"
       :rows="row_per_page"
       :totalRecords="total_item_count"
       :rowsPerPageOptions="[5, 10, 20, 50]"
       @page="onPage"
-      tableStyle="min-width: 50rem"
+      tableStyle="min-width: 100%"
     >
       <template #header>
-        <div class="flex flex-row justify-between">
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
           <Button
             :disabled="loading"
             severity="info"
@@ -167,24 +167,28 @@ watch([current_page, row_per_page], () => {
             outlined
             @click="refreshTable()"
           />
-          <FileUpload
-            :disabled="loading"
-            mode="basic"
-            @select="onFileSelect"
-            customUpload
-            auto
-            severity="success"
-            chooseLabel="Upload"
-            chooseIcon="pi pi-upload"
-          />
-          <Button
-            :disabled="loading"
-            severity="danger"
-            type="button"
-            icon="pi pi-trash"
-            label="Delete"
-            @click="deleteBatchRecord(selected_records.map((record: any) => record.id))"
-          />
+          <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 10px;">
+            <FileUpload
+              style="display: flex; align-self: end;"
+              :disabled="loading"
+              mode="basic"
+              @select="onFileSelect"
+              customUpload
+              auto
+              severity="success"
+              chooseLabel="Upload"
+              chooseIcon="pi pi-upload"
+            />
+            <Button
+              style="display: flex; align-self: end;"
+              :disabled="loading"
+              severity="danger"
+              type="button"
+              icon="pi pi-trash"
+              label="Delete"
+              @click="deleteBatchRecord(selected_records.map((record: any) => record.id))"
+            />
+          </div>
         </div>
       </template>
       <template #empty>No record found.</template>
