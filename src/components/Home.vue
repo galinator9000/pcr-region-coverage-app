@@ -26,7 +26,7 @@ onMounted(() => {
 const refreshTable = () => {
   loading.value = true
   axios
-    .get(`/gene?page=${current_page.value}&pagesize=${row_per_page.value}`)
+    .get(`${import.meta.env.VITE_API_URL}/gene?page=${current_page.value}&pagesize=${row_per_page.value}`)
     .then((response) => {
       if (response && response.data && response.data?.pagination) {
         records.value = response.data?.items
@@ -80,7 +80,7 @@ const onFileSelect = (event: any) => {
 
 const deleteBatchRecord = (deleteIds: Array<number>) => {
   axios
-    .delete(`/gene/delete_batch/`, { data: { ids: deleteIds } })
+    .delete(`${import.meta.env.VITE_API_URL}/gene/delete_batch/`, { data: { ids: deleteIds } })
     .then((response) => {
       if (response && response.data) {
         toast.add({
@@ -106,7 +106,7 @@ const deleteBatchRecord = (deleteIds: Array<number>) => {
 
 const createBatchRecords = async (newRecords: Array<any>) => {
   try {
-    const response = await axios.post(`/gene/create_batch/`, newRecords)
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/gene/create_batch/`, newRecords)
     if (response && response.data) {
       toast.add({
         severity: 'success',

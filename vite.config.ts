@@ -16,13 +16,7 @@ export default defineConfig({
     },
   },
   server: {
+    port: process.env.PORT ? parseInt(process.env.PORT) : 8000,
     cors: false,
-    proxy: {
-      '/gene': {
-        target: 'http://localhost:8001/',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
   }
 })
