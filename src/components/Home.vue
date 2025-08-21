@@ -6,6 +6,7 @@ import DataTable from 'primevue/datatable'
 import Button from 'primevue/button'
 import Column from 'primevue/column'
 import FileUpload from 'primevue/fileupload'
+import ProgressBar from 'primevue/progressbar';
 
 import { useToast } from 'primevue/usetoast'
 
@@ -196,21 +197,18 @@ watch([current_page, row_per_page], () => {
           {{ (slotProps.data.unique_gene_ids as Array<string>).join(",") }}
         </template>
       </Column>
-      <Column field="chromosome" header="Chromosome"></Column>
-      <Column field="start" header="Start"></Column>
-      <Column field="end" header="End"></Column>
-      <Column field="primer_based_count" header="Primer Based Count"></Column>
-      <Column field="percentage" header="Percentage"></Column>
-      <Column field="minimum_count" header="Minimum Count"></Column>
-      <Column field="maximum_count" header="Maximum Count"></Column>
-      <Column field="forward_count" header="Forward Count"></Column>
-      <Column field="reverse_count" header="Reverse Count"></Column>
-      <Column field="meandepth" header="Mean Depth">
+      <Column field="chromosome" header="Chromosome">
         <template #body="slotProps">
-          {{ (slotProps.data.meandepth as number).toFixed(2) }}
+          {{ `${slotProps.data.chromosome}:${slotProps.data.start}-${slotProps.data.end}` }}
         </template>
       </Column>
-      <Column field="stdev" header="Standard Deviation"></Column>
+      <Column field="minimum_count" header="Minimum Count"></Column>
+      <Column field="maximum_count" header="Maximum Count"></Column>
+      <Column field="percentage" header="Percentage">
+        <template #body="slotProps">
+          <ProgressBar :value="slotProps.data.percentage" />
+        </template>
+      </Column>
       <Column header="Actions">
         <template #body="slotProps">
           <Button
